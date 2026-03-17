@@ -1,0 +1,138 @@
+{
+  "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+  "version": "1.0.0",
+  "manifestVersion": "1.1",
+  "name": {
+    "short": "MailAdviser",
+    "full": "Mail Adviser - 誤送信防止アドイン"
+  },
+  "description": {
+    "short": "メール送信前に宛先・添付ファイルを確認します",
+    "full": "送信前にポップアップで宛先・社外ドメイン・添付ファイルを確認し、誤送信を防止します。"
+  },
+  "icons": {
+    "outline": "https://dnaiengiadgina.github.io/my-mail-adviser/assets/icon-outline.png",
+    "color": "https://dnaiengiadgina.github.io/my-mail-adviser/assets/icon-color.png"
+  },
+  "accentColor": "#1a56db",
+  "extensions": [
+    {
+      "requirements": {
+        "scopes": ["mail"]
+      },
+      "runtimes": [
+        {
+          "requirements": {
+            "capabilities": [
+              { "name": "MailBox", "minVersion": "1.3" }
+            ]
+          },
+          "id": "TaskPaneRuntime",
+          "type": "general",
+          "code": {
+            "page": "https://dnaiengiadgina.github.io/my-mail-adviser/taskpane.html"
+          },
+          "lifetime": "short",
+          "actions": [
+            {
+              "id": "TaskPaneRuntimeShow",
+              "type": "openPage",
+              "pinnable": false,
+              "view": "dashboard"
+            }
+          ]
+        },
+        {
+          "requirements": {
+            "capabilities": [
+              { "name": "MailBox", "minVersion": "1.3" }
+            ]
+          },
+          "id": "CommandsRuntime",
+          "type": "general",
+          "code": {
+            "page": "https://dnaiengiadgina.github.io/my-mail-adviser/commands.html"
+          },
+          "lifetime": "short",
+          "actions": [
+            {
+              "id": "onSendHandler",
+              "type": "executeFunction",
+              "displayName": "Send Handler"
+            }
+          ]
+        }
+      ],
+      "ribbons": [
+        {
+          "requirements": {
+            "scopes": ["mail"],
+            "formFactors": ["desktop"]
+          },
+          "contexts": ["mailCompose"],
+          "tabs": [
+            {
+              "builtInTabId": "TabDefault",
+              "groups": [
+                {
+                  "id": "msgComposeGroup",
+                  "label": "誤送信防止",
+                  "icons": [
+                    { "size": 16, "url": "https://dnaiengiadgina.github.io/my-mail-adviser/assets/icon-16.png" },
+                    { "size": 32, "url": "https://dnaiengiadgina.github.io/my-mail-adviser/assets/icon-32.png" },
+                    { "size": 80, "url": "https://dnaiengiadgina.github.io/my-mail-adviser/assets/icon-80.png" }
+                  ],
+                  "controls": [
+                    {
+                      "id": "msgComposeOpenPaneButton",
+                      "type": "button",
+                      "label": "送信前確認",
+                      "icons": [
+                        { "size": 16, "url": "https://dnaiengiadgina.github.io/my-mail-adviser/assets/icon-16.png" },
+                        { "size": 32, "url": "https://dnaiengiadgina.github.io/my-mail-adviser/assets/icon-32.png" },
+                        { "size": 80, "url": "https://dnaiengiadgina.github.io/my-mail-adviser/assets/icon-80.png" }
+                      ],
+                      "supertip": {
+                        "title": "送信前確認を開く",
+                        "description": "宛先・添付ファイルを確認してから送信します"
+                      },
+                      "actionId": "TaskPaneRuntimeShow"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "autoRunEvents": [
+        {
+          "requirements": {
+            "capabilities": [
+              { "name": "MailBox", "minVersion": "1.3" }
+            ]
+          },
+          "events": [
+            {
+              "type": "messageSending",
+              "actionId": "onSendHandler",
+              "options": {
+                "sendMode": "promptUser"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "authorization": {
+    "permissions": {
+      "resourceSpecific": [
+        {
+          "name": "MailboxItem.ReadWrite.User",
+          "type": "Delegated"
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mail Adviser</title>
+<script type="text/javascript" src="https://appsforoffice.microsoft.com/lib/1.1/hosted/office.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --blue: #1a56db;
+    --blue-dark: #1346b8;
+    --blue-light: #e8f0fe;
+    --red: #c0392b;
+    --red-light: #fdf0ee;
+    --orange: #d97706;
+    --orange-light: #fffbeb;
+    --green: #059669;
+    --green-light: #f0fdf4;
+    --gray-900: #111827;
+    --gray-700: #374151;
+    --gray-600: #4b5563;
+    --gray-400: #9ca3af;
+    --gray-200: #e5e7eb;
+    --gray-100: #f9fafb;
+    --border: #e5e7eb;
+    --radius: 8px;
+    --shadow: 0 1px 3px rgba(0,0,0,0.1);
+  }
+
+  body {
+    font-family: "Yu Gothic UI", "Meiryo UI", "Segoe UI", sans-serif;
+    background: var(--gray-100);
+    color: var(--gray-900);
+    font-size: 13px;
+    line-height: 1.5;
+  }
+
+  /* ヘッダー */
+  .app-header {
+    background: var(--blue);
+    color: #fff;
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .app-header-left { display: flex; align-items: center; gap: 8px; }
+  .app-logo { font-size: 18px; }
+  .app-title { font-size: 14px; font-weight: 700; letter-spacing: 0.02em; }
+  .app-sub   { font-size: 10px; opacity: 0.8; }
+  .app-version { font-size: 10px; opacity: 0.6; background: rgba(255,255,255,0.15); padding: 2px 7px; border-radius: 10px; }
+
+  /* コンテンツ */
+  .content { padding: 14px 16px; }
+
+  /* カード */
+  .card {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    margin-bottom: 12px;
+    overflow: hidden;
+    box-shadow: var(--shadow);
+  }
+
+  .card-header {
+    padding: 9px 14px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .card-header.blue   { background: var(--blue-light); color: var(--blue); }
+  .card-header.red    { background: var(--red-light);  color: var(--red); }
+  .card-header.orange { background: var(--orange-light); color: var(--orange); }
+  .card-header.green  { background: var(--green-light);  color: var(--green); }
+
+  .card-body { padding: 12px 14px; }
+
+  /* ステータス表示 */
+  .status-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+
+  .status-item {
+    background: var(--gray-100);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 10px 12px;
+    text-align: center;
+  }
+
+  .status-count { font-size: 22px; font-weight: 700; line-height: 1; }
+  .status-count.warn   { color: var(--red); }
+  .status-count.info   { color: var(--blue); }
+  .status-count.attach { color: var(--orange); }
+  .status-count.ok     { color: var(--green); }
+  .status-label { font-size: 10px; color: var(--gray-600); margin-top: 3px; }
+
+  /* バッジリスト */
+  .badge-list { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 6px; }
+  .badge {
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 20px;
+    border: 1px solid;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .badge.ext  { background: var(--red-light);    color: var(--red);    border-color: #fca5a5; }
+  .badge.int  { background: var(--blue-light);   color: var(--blue);   border-color: #93c5fd; }
+  .badge.att  { background: var(--orange-light);  color: var(--orange); border-color: #fcd34d; }
+
+  /* チェックリスト */
+  .check-list { display: flex; flex-direction: column; gap: 6px; }
+
+  .check-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    background: var(--gray-100);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.15s;
+    user-select: none;
+  }
+  .check-item:hover { background: #eef2ff; }
+  .check-item.checked { background: var(--green-light); border-color: #6ee7b7; }
+  .check-item input[type="checkbox"] { width: 15px; height: 15px; accent-color: var(--blue); cursor: pointer; flex-shrink: 0; }
+  .check-item label { cursor: pointer; font-size: 12px; flex: 1; }
+  .check-item.checked label { color: var(--green); }
+
+  /* 送信遅延 */
+  .delay-control {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+  .delay-control label { font-size: 12px; color: var(--gray-700); white-space: nowrap; }
+  .delay-select {
+    flex: 1;
+    font-size: 12px;
+    padding: 6px 10px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: #fff;
+    color: var(--gray-900);
+    font-family: inherit;
+  }
+
+  /* 遅延カウントダウン */
+  .countdown-box {
+    background: var(--orange-light);
+    border: 1px solid #fcd34d;
+    border-radius: 6px;
+    padding: 10px 14px;
+    display: none;
+  }
+  .countdown-box.active { display: block; }
+  .countdown-title { font-size: 11px; color: var(--orange); font-weight: 700; margin-bottom: 4px; }
+  .countdown-time  { font-size: 28px; font-weight: 700; color: var(--orange); line-height: 1; }
+  .countdown-sub   { font-size: 11px; color: var(--gray-600); margin-top: 2px; }
+
+  /* ボタン */
+  .btn-row { display: flex; gap: 8px; margin-top: 10px; }
+  .btn {
+    flex: 1;
+    padding: 9px 12px;
+    border-radius: var(--radius);
+    border: none;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    transition: opacity 0.15s;
+  }
+  .btn:hover { opacity: 0.85; }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .btn-primary   { background: var(--blue);   color: #fff; }
+  .btn-danger    { background: var(--red);    color: #fff; }
+  .btn-secondary { background: #fff; color: var(--gray-700); border: 1px solid var(--border); }
+
+  .loading { padding: 30px; text-align: center; color: var(--gray-400); }
+  .loading-spin { font-size: 24px; display: block; margin-bottom: 8px; animation: spin 1s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .alert {
+    padding: 10px 14px;
+    border-radius: 6px;
+    font-size: 12px;
+    margin-bottom: 10px;
+  }
+  .alert-warn  { background: var(--red-light);    color: var(--red);    border: 1px solid #fca5a5; }
+  .alert-info  { background: var(--blue-light);   color: var(--blue);   border: 1px solid #93c5fd; }
+</style>
+</head>
+<body>
+
+<div class="app-header">
+  <div class="app-header-left">
+    <span class="app-logo">✉</span>
+    <div>
+      <div class="app-title">Mail Adviser</div>
+      <div class="app-sub">誤送信防止アドイン</div>
+    </div>
+  </div>
+  <span class="app-version">v1.0</span>
+</div>
+
+<div class="content">
+  <div class="loading" id="loading">
+    <span class="loading-spin">⌛</span>
+    メール情報を読み込み中...
+  </div>
+
+  <div id="main" style="display:none">
+
+    <!-- ステータスサマリー -->
+    <div class="card">
+      <div class="card-header blue">📊 送信内容サマリー</div>
+      <div class="card-body">
+        <div class="status-grid">
+          <div class="status-item">
+            <div class="status-count info" id="stat-total">0</div>
+            <div class="status-label">宛先合計</div>
+          </div>
+          <div class="status-item">
+            <div class="status-count warn" id="stat-ext">0</div>
+            <div class="status-label">社外宛先</div>
+          </div>
+          <div class="status-item">
+            <div class="status-count attach" id="stat-att">0</div>
+            <div class="status-label">添付ファイル</div>
+          </div>
+          <div class="status-item">
+            <div class="status-count ok" id="stat-sub">✓</div>
+            <div class="status-label">件名</div>
+          </div>
+        </div>
+
+        <!-- 社外宛先リスト -->
+        <div id="ext-section" style="display:none">
+          <div style="font-size:11px; color:var(--gray-600); margin-top:10px; margin-bottom:4px; font-weight:600;">社外宛先：</div>
+          <div class="badge-list" id="ext-list"></div>
+        </div>
+
+        <!-- 添付ファイルリスト -->
+        <div id="att-section" style="display:none">
+          <div style="font-size:11px; color:var(--gray-600); margin-top:10px; margin-bottom:4px; font-weight:600;">添付ファイル：</div>
+          <div class="badge-list" id="att-list"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 警告 -->
+    <div id="alerts"></div>
+
+    <!-- チェックリスト -->
+    <div class="card" id="checklist-card" style="display:none">
+      <div class="card-header red">☑ 送信前チェックリスト</div>
+      <div class="card-body">
+        <div class="check-list" id="check-list"></div>
+      </div>
+    </div>
+
+    <!-- 送信遅延 -->
+    <div class="card">
+      <div class="card-header orange">⏱ 送信遅延（オプション）</div>
+      <div class="card-body">
+        <div class="delay-control">
+          <label for="delay-select">送信タイミング：</label>
+          <select id="delay-select" class="delay-select" onchange="onDelayChange()">
+            <option value="0">すぐに送信</option>
+            <option value="30">30秒後に送信</option>
+            <option value="60">1分後に送信</option>
+            <option value="180">3分後に送信</option>
+            <option value="300">5分後に送信</option>
+          </select>
+        </div>
+        <div class="countdown-box" id="countdown-box">
+          <div class="countdown-title">⏳ 送信まであと...</div>
+          <div class="countdown-time" id="countdown-time">--</div>
+          <div class="countdown-sub">残り時間内であればキャンセルできます</div>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-secondary" id="btn-cancel-delay" onclick="cancelDelay()" style="display:none">送信キャンセル</button>
+          <button class="btn btn-primary" id="btn-send" onclick="confirmSend()" disabled>確認完了・送信</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// ---- 状態管理 ----
+const COMPANY_DOMAIN = "fujilogi.co.jp";
+let delayTimer = null;
+let delayRemaining = 0;
+let checks = [];
+
+Office.onReady(function () {
+  loadMailInfo();
+});
+
+function loadMailInfo() {
+  const item = Office.context.mailbox.item;
+
+  Promise.all([
+    getRecipients(item),
+    getSubject(item),
+    getAttachments(item)
+  ]).then(function ([recipients, subject, attachments]) {
+    document.getElementById("loading").style.display = "none";
+    document.getElementById("main").style.display = "block";
+
+    renderInfo(recipients, subject, attachments);
+  }).catch(function () {
+    document.getElementById("loading").innerHTML =
+      '<div class="alert alert-warn">情報の読み込みに失敗しました。ページを再読み込みしてください。</div>';
+  });
+}
+
+function renderInfo(recipients, subject, attachments) {
+  const external = recipients.filter(r => !r.emailAddress.toLowerCase().endsWith("@" + COMPANY_DOMAIN));
+  const internal = recipients.filter(r =>  r.emailAddress.toLowerCase().endsWith("@" + COMPANY_DOMAIN));
+
+  // サマリー
+  document.getElementById("stat-total").textContent = recipients.length;
+  document.getElementById("stat-ext").textContent   = external.length;
+  document.getElementById("stat-att").textContent   = attachments.length;
+
+  const noSubject = !subject || subject.trim() === "";
+  const subEl = document.getElementById("stat-sub");
+  if (noSubject) {
+    subEl.textContent = "！"; subEl.className = "status-count warn";
+  } else {
+    subEl.textContent = "✓"; subEl.className = "status-count ok";
+  }
+
+  // 社外リスト
+  if (external.length > 0) {
+    document.getElementById("ext-section").style.display = "block";
+    const list = document.getElementById("ext-list");
+    external.forEach(r => {
+      const b = document.createElement("span");
+      b.className = "badge ext"; b.textContent = r.emailAddress;
+      list.appendChild(b);
+    });
+  }
+
+  // 添付リスト
+  if (attachments.length > 0) {
+    document.getElementById("att-section").style.display = "block";
+    const list = document.getElementById("att-list");
+    attachments.forEach(a => {
+      const b = document.createElement("span");
+      b.className = "badge att"; b.textContent = a.name;
+      list.appendChild(b);
+    });
+  }
+
+  // アラート
+  const alerts = document.getElementById("alerts");
+  if (external.length > 0) {
+    alerts.innerHTML += `<div class="alert alert-warn">⚠️ 社外宛先が <strong>${external.length}件</strong> 含まれています。宛先を再確認してください。</div>`;
+  }
+  if (noSubject) {
+    alerts.innerHTML += `<div class="alert alert-warn">⚠️ 件名が設定されていません。</div>`;
+  }
+  if (recipients.length === 0) {
+    alerts.innerHTML += `<div class="alert alert-warn">⚠️ 宛先が設定されていません。</div>`;
+  }
+
+  // チェックリスト生成
+  const checkItems = [];
+  if (external.length > 0) checkItems.push({ id:"chk-ext", text: "社外宛先（" + external.length + "件）を確認しました" });
+  if (attachments.length > 0) checkItems.push({ id:"chk-att", text: "添付ファイル（" + attachments.length + "件）の内容を確認しました" });
+  if (noSubject) checkItems.push({ id:"chk-sub", text: "件名なしで送ることを承認します" });
+  if (external.length > 0 && attachments.length > 0)
+    checkItems.push({ id:"chk-combo", text: "社外宛先への添付ファイル送信を再確認しました" });
+
+  if (checkItems.length > 0) {
+    document.getElementById("checklist-card").style.display = "block";
+    const cl = document.getElementById("check-list");
+    checkItems.forEach(function (ci) {
+      const item = document.createElement("div");
+      item.className = "check-item"; item.id = ci.id + "-row";
+      const input = document.createElement("input"); input.type = "checkbox"; input.id = ci.id;
+      const lbl = document.createElement("label"); lbl.htmlFor = ci.id; lbl.textContent = ci.text;
+      item.appendChild(input); item.appendChild(lbl);
+      item.addEventListener("click", function (e) {
+        if (e.target !== input) { input.checked = !input.checked; }
+        item.classList.toggle("checked", input.checked);
+        input.dispatchEvent(new Event("change", { bubbles:true }));
+        updateSendBtn();
+      });
+      cl.appendChild(item);
+      checks.push(input);
+    });
+  }
+
+  updateSendBtn();
+}
+
+function updateSendBtn() {
+  const allChecked = checks.every(c => c.checked);
+  document.getElementById("btn-send").disabled = !allChecked || delayTimer !== null;
+}
+
+function onDelayChange() {
+  // 選択変更時は既存タイマーをリセット
+  if (delayTimer) cancelDelay();
+}
+
+function confirmSend() {
+  const delaySecs = parseInt(document.getElementById("delay-select").value, 10);
+
+  if (delaySecs === 0) {
+    // 即時送信
+    sendMail();
+    return;
+  }
+
+  // 遅延送信タイマー開始
+  delayRemaining = delaySecs;
+  document.getElementById("countdown-box").classList.add("active");
+  document.getElementById("btn-cancel-delay").style.display = "block";
+  document.getElementById("btn-send").style.display = "none";
+
+  updateCountdown();
+  delayTimer = setInterval(function () {
+    delayRemaining--;
+    updateCountdown();
+    if (delayRemaining <= 0) {
+      clearInterval(delayTimer); delayTimer = null;
+      sendMail();
+    }
+  }, 1000);
+}
+
+function updateCountdown() {
+  const m = Math.floor(delayRemaining / 60);
+  const s = delayRemaining % 60;
+  document.getElementById("countdown-time").textContent =
+    m > 0 ? m + "分 " + String(s).padStart(2,"0") + "秒" : s + "秒";
+}
+
+function cancelDelay() {
+  if (delayTimer) { clearInterval(delayTimer); delayTimer = null; }
+  delayRemaining = 0;
+  document.getElementById("countdown-box").classList.remove("active");
+  document.getElementById("btn-cancel-delay").style.display = "none";
+  document.getElementById("btn-send").style.display = "block";
+  document.getElementById("countdown-time").textContent = "--";
+  updateSendBtn();
+}
+
+function sendMail() {
+  // Outlook の送信を呼び出す（タスクパネルからは直接送信不可のため、送信ボタンへの誘導メッセージを表示）
+  document.getElementById("countdown-box").classList.remove("active");
+  document.getElementById("btn-cancel-delay").style.display = "none";
+  document.getElementById("btn-send").style.display = "none";
+
+  const alerts = document.getElementById("alerts");
+  const msg = document.createElement("div");
+  msg.className = "alert alert-info";
+  msg.innerHTML = "✅ 確認が完了しました。<br>Outlook の <strong>送信ボタン</strong> を押してメールを送信してください。";
+  alerts.insertBefore(msg, alerts.firstChild);
+
+  // ページ上部にスクロール
+  window.scrollTo(0, 0);
+}
+
+// ---- ヘルパー ----
+function getRecipients(item) {
+  return new Promise(function (resolve) {
+    const all = [];
+    let pending = 3;
+    function done(r) { all.push(...r); if (--pending === 0) resolve(all); }
+    item.to.getAsync(r => done(r.status === "succeeded" ? r.value : []));
+    item.cc.getAsync(r => done(r.status === "succeeded" ? r.value : []));
+    item.bcc.getAsync(r => done(r.status === "succeeded" ? r.value : []));
+  });
+}
+
+function getSubject(item) {
+  return new Promise(function (resolve) {
+    item.subject.getAsync(r => resolve(r.status === "succeeded" ? r.value : ""));
+  });
+}
+
+function getAttachments(item) {
+  return new Promise(function (resolve) {
+    resolve(item.attachments || []);
+  });
+}
+</script>
+</body>
+</html>

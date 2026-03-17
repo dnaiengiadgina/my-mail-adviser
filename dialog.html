@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>送信確認</title>
+<script type="text/javascript" src="https://appsforoffice.microsoft.com/lib/1.1/hosted/office.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --blue: #1a56db;
+    --blue-light: #e8f0fe;
+    --red: #c0392b;
+    --red-light: #fdf0ee;
+    --orange: #d97706;
+    --orange-light: #fffbeb;
+    --green: #059669;
+    --gray-900: #111827;
+    --gray-600: #4b5563;
+    --gray-400: #9ca3af;
+    --gray-100: #f3f4f6;
+    --border: #e5e7eb;
+    --radius: 8px;
+  }
+
+  body {
+    font-family: "Yu Gothic UI", "Meiryo UI", "Segoe UI", sans-serif;
+    background: #fff;
+    color: var(--gray-900);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .header {
+    background: var(--blue);
+    color: #fff;
+    padding: 14px 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .header-icon {
+    width: 28px; height: 28px;
+    background: rgba(255,255,255,0.2);
+    border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+  }
+
+  .header h1 { font-size: 15px; font-weight: 600; }
+  .header p  { font-size: 11px; opacity: 0.85; }
+
+  .body { flex: 1; padding: 16px 20px; overflow-y: auto; }
+
+  .section {
+    margin-bottom: 14px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+
+  .section-header {
+    padding: 9px 14px;
+    font-size: 12px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .section-header.warn  { background: var(--red-light);    color: var(--red); }
+  .section-header.caution { background: var(--orange-light); color: var(--orange); }
+  .section-header.ok    { background: #f0fdf4; color: var(--green); }
+
+  .section-body { padding: 10px 14px; background: #fff; }
+
+  .badge-list { display: flex; flex-wrap: wrap; gap: 6px; }
+
+  .badge {
+    font-size: 11px;
+    padding: 3px 10px;
+    border-radius: 20px;
+    border: 1px solid;
+  }
+
+  .badge.external { background: var(--red-light);    color: var(--red);    border-color: #fca5a5; }
+  .badge.internal { background: var(--blue-light);   color: var(--blue);   border-color: #93c5fd; }
+  .badge.attach   { background: var(--orange-light);  color: var(--orange); border-color: #fcd34d; }
+
+  .warn-text { font-size: 12px; color: var(--red); font-weight: 500; }
+  .info-text { font-size: 12px; color: var(--gray-600); }
+
+  .check-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 0;
+    border-bottom: 1px solid var(--gray-100);
+    cursor: pointer;
+    user-select: none;
+  }
+  .check-row:last-child { border-bottom: none; }
+  .check-row input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--blue); cursor: pointer; }
+  .check-row label { font-size: 12px; cursor: pointer; flex: 1; }
+
+  .delay-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 0 2px;
+  }
+  .delay-row label { font-size: 12px; color: var(--gray-600); }
+  .delay-select {
+    font-size: 12px;
+    padding: 4px 8px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: #fff;
+    color: var(--gray-900);
+  }
+
+  .footer {
+    padding: 12px 20px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    gap: 8px;
+    background: var(--gray-100);
+  }
+
+  .btn {
+    flex: 1;
+    padding: 10px;
+    border-radius: var(--radius);
+    border: none;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    transition: opacity 0.15s;
+  }
+  .btn:hover { opacity: 0.88; }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .btn-send   { background: var(--blue); color: #fff; }
+  .btn-delay  { background: var(--orange); color: #fff; }
+  .btn-cancel { background: #fff; color: var(--gray-600); border: 1px solid var(--border); }
+
+  .progress-hint {
+    font-size: 11px;
+    color: var(--gray-400);
+    text-align: center;
+    padding: 4px 0 0;
+    letter-spacing: 0.02em;
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-icon">✉</div>
+  <div>
+    <h1>送信前確認</h1>
+    <p>内容を確認してから送信してください</p>
+  </div>
+</div>
+
+<div class="body" id="body">
+  <!-- JS で動的生成 -->
+</div>
+
+<div class="footer">
+  <button class="btn btn-cancel" onclick="doCancel()">キャンセル</button>
+  <button class="btn btn-delay" id="btnDelay" onclick="doDelay()" style="display:none">遅延送信</button>
+  <button class="btn btn-send"  id="btnSend"  onclick="doSend()" disabled>送信する</button>
+</div>
+
+<script>
+Office.onReady(function () {
+  const params = new URLSearchParams(window.location.search);
+  const externalList  = JSON.parse(decodeURIComponent(params.get("external")  || "[]"));
+  const attachList    = JSON.parse(decodeURIComponent(params.get("attachments") || "[]"));
+  const noSubject     = params.get("noSubject") === "true";
+  const totalRecipients = parseInt(params.get("total") || "0", 10);
+
+  const body = document.getElementById("body");
+  const checks = [];
+
+  // ---- 社外宛先セクション ----
+  if (externalList.length > 0) {
+    const sec = createSection("warn",
+      "⚠️ 社外宛先が含まれています（" + externalList.length + "件）",
+      function (sb) {
+        const bl = div("badge-list");
+        externalList.forEach(function (e) {
+          const b = div("badge external"); b.textContent = e; bl.appendChild(b);
+        });
+        sb.appendChild(bl);
+
+        const chk = addCheck(sb, "社外宛先を確認しました", "external-check");
+        checks.push(chk);
+      }
+    );
+    body.appendChild(sec);
+  }
+
+  // ---- 添付ファイルセクション ----
+  if (attachList.length > 0) {
+    const sec = createSection("caution",
+      "📎 添付ファイルあり（" + attachList.length + "件）",
+      function (sb) {
+        const bl = div("badge-list");
+        attachList.forEach(function (name) {
+          const b = div("badge attach"); b.textContent = name; bl.appendChild(b);
+        });
+        sb.appendChild(bl);
+
+        const chk = addCheck(sb, "添付ファイルの内容を確認しました", "attach-check");
+        checks.push(chk);
+      }
+    );
+    body.appendChild(sec);
+  }
+
+  // ---- 件名なし警告 ----
+  if (noSubject) {
+    const sec = createSection("warn",
+      "⚠️ 件名が設定されていません",
+      function (sb) {
+        const t = div("warn-text"); t.textContent = "件名なしで送信しようとしています。よろしいですか？";
+        sb.appendChild(t);
+        const chk = addCheck(sb, "件名なしで送ることを確認しました", "subject-check");
+        checks.push(chk);
+      }
+    );
+    body.appendChild(sec);
+  }
+
+  // ---- 送信遅延セクション ----
+  const delaySec = createSection("ok",
+    "⏱ 送信遅延（オプション）",
+    function (sb) {
+      const row = div("delay-row");
+      const lbl = document.createElement("label"); lbl.textContent = "送信を遅らせる："; lbl.htmlFor = "delay-select";
+      const sel = document.createElement("select"); sel.id = "delay-select"; sel.className = "delay-select";
+      [["すぐに送信", "0"], ["30秒後", "30"], ["1分後", "60"], ["3分後", "180"], ["5分後", "300"]].forEach(function ([t, v]) {
+        const o = document.createElement("option"); o.value = v; o.textContent = t; sel.appendChild(o);
+      });
+      row.appendChild(lbl); row.appendChild(sel);
+      sb.appendChild(row);
+
+      sel.addEventListener("change", function () {
+        document.getElementById("btnDelay").style.display = sel.value !== "0" ? "block" : "none";
+      });
+    }
+  );
+  body.appendChild(delaySec);
+
+  // ---- チェック状態を監視 ----
+  function updateSendButton() {
+    const allChecked = checks.every(function (c) { return c.checked; });
+    document.getElementById("btnSend").disabled = !allChecked;
+  }
+
+  checks.forEach(function (c) { c.addEventListener("change", updateSendButton); });
+  updateSendButton();
+});
+
+// --- アクション ---
+function doSend() {
+  Office.context.ui.messageParent("send");
+}
+
+function doCancel() {
+  Office.context.ui.messageParent("cancel");
+}
+
+function doDelay() {
+  const sel = document.getElementById("delay-select");
+  const secs = parseInt(sel.value, 10);
+  if (secs > 0) {
+    Office.context.ui.messageParent("delay:" + secs);
+  }
+}
+
+// --- ヘルパー ---
+function div(cls) {
+  const el = document.createElement("div");
+  if (cls) el.className = cls;
+  return el;
+}
+
+function createSection(type, title, buildBody) {
+  const sec = div("section");
+  const hdr = div("section-header " + type);
+  hdr.textContent = title;
+  sec.appendChild(hdr);
+  const sb = div("section-body");
+  buildBody(sb);
+  sec.appendChild(sb);
+  return sec;
+}
+
+function addCheck(parent, labelText, id) {
+  const row = div("check-row");
+  const input = document.createElement("input");
+  input.type = "checkbox"; input.id = id;
+  const lbl = document.createElement("label");
+  lbl.htmlFor = id; lbl.textContent = "✔ " + labelText;
+  row.appendChild(input); row.appendChild(lbl);
+  row.addEventListener("click", function (e) {
+    if (e.target !== input) input.checked = !input.checked;
+    input.dispatchEvent(new Event("change", { bubbles: true }));
+  });
+  parent.appendChild(row);
+  return input;
+}
+</script>
+</body>
+</html>
